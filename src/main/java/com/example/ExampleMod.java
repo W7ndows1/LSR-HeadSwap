@@ -1,40 +1,38 @@
-package net.fabricmc.example;
+package com.example;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.Level;
 
 public class ExampleMod implements ModInitializer {
 
     @Override
     public void onInitialize() {
         UseItemCallback.EVENT.register((player, world, hand) -> {
-            ItemStack held = player.getStackInHand(hand);
+            ItemStack held = player.getItemInHand(hand);
 
-            // Only player heads
-            if (!held.isOf(Items.PLAYER_HEAD)) return ActionResult.PASS;
+            if (!held.is(Items.PLAYER_HEAD)) return InteractionResult.PASS;
+            if (world.isClientSide()) return InteractionResult.SUCCESS;
 
-            // Server only
-            if (world.isClient()) return ActionResult.SUCCESS;
-
-            ItemStack helmet = player.getEquippedStack(EquipmentSlot.HEAD);
+            ItemStack helmet = player.getItemBySlot(EquipmentSlot.HEAD);
             ItemStack head = held.copy();
             head.setCount(1);
 
-            player.equipStack(EquipmentSlot.HEAD, head);
+            player.setItemSlot(EquipmentSlot.HEAD, head);
 
             if (helmet.isEmpty()) {
-                held.decrement(1);
+                held.shrink(1);
             } else {
-                player.setStackInHand(hand, helmet);
+                player.setItemInHand(hand, helmet);
             }
 
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         });
     }
 }
