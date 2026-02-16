@@ -17,8 +17,14 @@ public class ExampleMod implements ModInitializer {
         UseItemCallback.EVENT.register((player, world, hand) -> {
             ItemStack held = player.getItemInHand(hand);
 
-            if (!held.is(Items.PLAYER_HEAD)) return InteractionResult.PASS;
-            if (world.isClientSide()) return InteractionResult.CONSUME;
+            if (!held.is(Items.PLAYER_HEAD)) {
+                return InteractionResult.PASS;
+            }
+
+            // IMPORTANT: do NOT consume on client
+            if (world.isClientSide()) {
+                return InteractionResult.PASS;
+            }
 
             ItemStack helmet = player.getItemBySlot(EquipmentSlot.HEAD);
             ItemStack head = held.copy();
