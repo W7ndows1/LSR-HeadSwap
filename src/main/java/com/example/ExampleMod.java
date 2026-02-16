@@ -1,50 +1,55 @@
 package com.example;
 
-import net.fabricmc.api.ModInitializer;
+import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
 
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.level.Level;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 
-public class ExampleMod implements ModInitializer {
+public class ExampleModClient implements ClientModInitializer {
 
     @Override
-    public void onInitialize() {
+    public void onInitializeClient() {
 
         UseItemCallback.EVENT.register((player, world, hand) -> {
 
-            ItemStack held = player.getItemInHand(hand);
-
-            // Only run on server
-            if (world.isClientSide()) {
-                return InteractionResult.PASS;
+            // Only run client side
+            if (!world.isClient()) {
+                return ActionResult.PASS;
             }
 
-            if (!held.is(Items.PLAYER_HEAD)) {
-                return InteractionResult.PASS;
+            MinecraftClient client = MinecraftClient.getInstance();
+            ClientPlayerEntity clientPlayer = client.player;
+
+            if (clientPlayer == null || client.interactionManager == null) {
+                return ActionResult.PASS;
             }
 
-            ItemStack helmet = player.getItemBySlot(EquipmentSlot.HEAD);
-
-            // Copy 1 head to equip
-            ItemStack toEquip = held.copy();
-            toEquip.setCount(1);
-
-            // Equip it
-            player.setItemSlot(EquipmentSlot.HEAD, toEquip);
-
-            // Swap logic
-            if (helmet.isEmpty()) {
-                held.shrink(1);
-            } else {
-                player.setItemInHand(hand, helmet);
+            // Only trigger if holding a player head
+            ItemStack held = clientPlayer.getStackInHand(hand);
+            if (!held.isOf(Items.PLAYER_HEAD)) {
+                return ActionResult.PASS;
             }
 
-            return InteractionResult.SUCCESS;
+            int selectedHotbar = clientPlayer.getInventory().selectedSlot;
+            int helmetSlot = 39; // helmet slot index in player inventory
+            int syncId = clientPlayer.currentScreenHandler.syncId;
+
+            // Swap hotbar slot with helmet slot (vanilla-style swap)
+            client.interactionManager.clickSlot(
+                    syncId,
+                    helmetSlot,
+                    selectedHotbar,
+                    SlotActionType.SWAP,
+                    clientPlayer
+            );
+
+            return ActionResult.SUCCESS;
         });
     }
 }
