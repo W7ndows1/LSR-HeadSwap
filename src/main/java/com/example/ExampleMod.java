@@ -2,44 +2,51 @@ package com.example;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.level.Level;
+
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.world.World;
 
 public class ExampleMod implements ModInitializer {
 
-  @Override
-public void onInitialize() {
+    @Override
+    public void onInitialize() {
 
-    UseItemCallback.EVENT.register((player, world, hand) -> {
+        UseItemCallback.EVENT.register((player, world, hand) -> {
 
-        // ✅ Only run logic on server
-        if (world.isClient()) {
-            return InteractionResult.PASS;
-        }
+            // Only run on server
+            if (world.isClient()) {
+                return ActionResult.PASS;
+            }
 
-        ItemStack held = player.getStackInHand(hand);
+            ItemStack held = player.getStackInHand(hand);
 
-        if (!held.isOf(Items.PLAYER_HEAD)) {
-            return InteractionResult.PASS;
-        }
+            // Only act if holding a player head
+            if (!held.isOf(Items.PLAYER_HEAD)) {
+                return ActionResult.PASS;
+            }
 
-        ItemStack helmet = player.getEquippedStack(EquipmentSlot.HEAD);
-        ItemStack head = held.copy();
-        head.setCount(1);
+            ItemStack currentHelmet = player.getEquippedStack(EquipmentSlot.HEAD);
 
-        player.equipStack(EquipmentSlot.HEAD, head);
+            // Copy one head to equip
+            ItemStack headToEquip = held.copy();
+            headToEquip.setCount(1);
 
-        if (helmet.isEmpty()) {
-            held.decrement(1);
-        } else {
-            player.setStackInHand(hand, helmet);
-        }
+            // Equip it
+            player.equipStack(EquipmentSlot.HEAD, headToEquip);
 
-        return InteractionResult.SUCCESS;
-    });
+            // Handle swap logic like normal helmets
+            if (currentHelmet.isEmpty()) {
+                held.decrement(1);
+            } else {
+                player.setStackInHand(hand, currentHelmet);
+            }
+
+            return ActionResult.SUCCESS;
+        });
+    }
 }
