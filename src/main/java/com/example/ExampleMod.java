@@ -18,7 +18,7 @@ public class ExampleMod implements ModInitializer {
             ItemStack held = player.getItemInHand(hand);
 
             if (!held.is(Items.PLAYER_HEAD)) return InteractionResult.PASS;
-            if (world.isClientSide()) return InteractionResult.SUCCESS;
+            if (world.isClientSide()) return InteractionResult.CONSUME;
 
             ItemStack helmet = player.getItemBySlot(EquipmentSlot.HEAD);
             ItemStack head = held.copy();
