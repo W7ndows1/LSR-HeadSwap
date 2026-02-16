@@ -12,33 +12,34 @@ import net.minecraft.world.level.Level;
 
 public class ExampleMod implements ModInitializer {
 
-    @Override
-    public void onInitialize() {
-        UseItemCallback.EVENT.register((player, world, hand) -> {
-            ItemStack held = player.getItemInHand(hand);
+  @Override
+public void onInitialize() {
 
-            if (!held.is(Items.PLAYER_HEAD)) {
-                return InteractionResult.PASS;
-            }
+    UseItemCallback.EVENT.register((player, world, hand) -> {
 
-            // IMPORTANT: do NOT consume on client
-            if (world.isClientSide()) {
-                return InteractionResult.PASS;
-            }
+        // ✅ Only run logic on server
+        if (world.isClient()) {
+            return InteractionResult.PASS;
+        }
 
-            ItemStack helmet = player.getItemBySlot(EquipmentSlot.HEAD);
-            ItemStack head = held.copy();
-            head.setCount(1);
+        ItemStack held = player.getStackInHand(hand);
 
-            player.setItemSlot(EquipmentSlot.HEAD, head);
+        if (!held.isOf(Items.PLAYER_HEAD)) {
+            return InteractionResult.PASS;
+        }
 
-            if (helmet.isEmpty()) {
-                held.shrink(1);
-            } else {
-                player.setItemInHand(hand, helmet);
-            }
+        ItemStack helmet = player.getEquippedStack(EquipmentSlot.HEAD);
+        ItemStack head = held.copy();
+        head.setCount(1);
 
-            return InteractionResult.SUCCESS;
-        });
-    }
+        player.equipStack(EquipmentSlot.HEAD, head);
+
+        if (helmet.isEmpty()) {
+            held.decrement(1);
+        } else {
+            player.setStackInHand(hand, helmet);
+        }
+
+        return InteractionResult.SUCCESS;
+    });
 }
